@@ -1,7 +1,4 @@
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 abstract class Room{
     protected int numberOfBeds;
@@ -117,18 +114,58 @@ class BookingRequestQueue{
         return !requestQueue.isEmpty();
     }
 }
+
+class RoomAllocationService {
+    private Map<String, Integer> roomCounters;
+
+    public RoomAllocationService() {
+        roomCounters = new HashMap<>();
+        roomCounters.put("Single", 0);
+        roomCounters.put("Double", 0);
+        roomCounters.put("Suite", 0);
+    }
+
+    public void allocateRoom(Reservation reservation, RoomInventory roomInventory) {
+        String type = reservation.getRoomType();
+
+        Map<String, Integer> availability = roomInventory.getRoomAvailability();
+
+        if (availability.get(type) > 0) {
+
+            // Increment counter
+            int count = roomCounters.get(type) + 1;
+            roomCounters.put(type, count);
+
+            // Generate Room ID
+            String roomId = type + "-" + count;
+
+            // Reduce availability
+            roomInventory.updateAvailability(type, availability.get(type) - 1);
+
+            System.out.println("Booking confirmed for Guest: "
+                    + reservation.getGuestName()
+                    + ", Room ID: " + roomId);
+        } else {
+            System.out.println("No rooms available for " + type);
+        }
+    }
+}
 public class BookMyStayApp {
     public static void main(String[] args) {
-        System.out.println("Booking Request Queue");
+
+        System.out.println("Room Allocation Processing");
 
         BookingRequestQueue bookingRequestQueue = new BookingRequestQueue();
+        RoomInventory inventory = new RoomInventory();
+        RoomAllocationService allocationService = new RoomAllocationService();
 
-        Reservation reservation = new Reservation("Abhi", "Single");
-        Reservation reservation2 = new Reservation("Subha", "Double");
-        Reservation reservation3 = new Reservation("Vanmathi", "Suite");
+        bookingRequestQueue.addRequest(new Reservation("Abhi", "Single"));
+        bookingRequestQueue.addRequest(new Reservation("Subha", "Single"));
+        bookingRequestQueue.addRequest(new Reservation("Vanmathi", "Suite"));
 
-        bookingRequestQueue.addRequest(reservation);
-        bookingRequestQueue.addRequest(reservation2);
-        bookingRequestQueue.addRequest(reservation3);
+        while (bookingRequestQueue.hasPendingRequests()) {
+            Reservation request = bookingRequestQueue.getNextRequest();
+            allocationService.allocateRoom(request, inventory);
+        }
     }
 }
