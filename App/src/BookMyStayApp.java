@@ -62,17 +62,41 @@ class SuiteRoom extends Room{
         super(numberOfBeds, sqaureFeet, pricePerNight,availableRooms);
     }
 }
+
+class RoomSearchService {
+    public void searchAvailableRooms(RoomInventory roomInventory,
+                                     Room singleRoom,
+                                     Room doubleRoom,
+                                     Room suiteRoom) {
+
+        System.out.println("\nRoom Search\n");
+
+        Map<String, Integer> availability = roomInventory.getRoomAvailability();
+
+        if (availability.get("Single") > 0) {
+            singleRoom.displayRoomDetails("Single Room");
+        }
+
+        if (availability.get("Double") > 0) {
+            doubleRoom.displayRoomDetails("Double Room");
+        }
+
+        if (availability.get("Suite") > 0) {
+            suiteRoom.displayRoomDetails("Suite Room");
+        }
+    }
+}
 public class BookMyStayApp {
     public static void main(String[] args) {
         System.out.println("Hotel Room Initialized");
+
+        RoomInventory inventory = new RoomInventory();
 
         SingleRoom single = new SingleRoom(1, 250, 1500, 5);
         DoubleRoom doubleRoom = new DoubleRoom(2, 400, 2500, 3);
         SuiteRoom suite = new SuiteRoom(3, 750, 5000, 2);
 
-        single.displayRoomDetails("Single Room");
-        doubleRoom.displayRoomDetails("Double Room");
-        suite.displayRoomDetails("Suite Room");
-
+        RoomSearchService searchService = new RoomSearchService();
+        searchService.searchAvailableRooms(inventory, single, doubleRoom, suite);
     }
 }
