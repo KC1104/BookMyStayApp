@@ -1,3 +1,4 @@
+import java.security.Provider;
 import java.util.*;
 
 abstract class Room{
@@ -150,22 +151,66 @@ class RoomAllocationService {
         }
     }
 }
+
+class AddOnService {
+    private String serviceName;
+    private double cost;
+
+    public AddOnService(String serviceName, double cost){
+        this.serviceName = serviceName;
+        this.cost = cost;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public double getCost() {
+        return cost;
+    }
+}
+
+class AddOnServiceManager {
+    private Map<String, List<AddOnService>> servicesByReservation;
+
+    public AddOnServiceManager(){
+        servicesByReservation = new HashMap<>();
+    }
+
+    public void addService(String reservationId, AddOnService service){
+        servicesByReservation
+                .computeIfAbsent(reservationId, k -> new ArrayList<>())
+                .add(service);
+    }
+
+    public double calculateCost(String reservationId){
+        double total = 0;
+
+        List<AddOnService> services = servicesByReservation.get(reservationId);
+
+        if (services != null) {
+            for (AddOnService s : services) {
+                total += s.getCost();
+            }
+        }
+
+        return total;
+    }
+}
 public class BookMyStayApp {
     public static void main(String[] args) {
 
-        System.out.println("Room Allocation Processing");
+        AddOnServiceManager addOnManager = new AddOnServiceManager();
 
-        BookingRequestQueue bookingRequestQueue = new BookingRequestQueue();
-        RoomInventory inventory = new RoomInventory();
-        RoomAllocationService allocationService = new RoomAllocationService();
+// Add services for reservation "Single-1"
+        addOnManager.addService("Single-1", new AddOnService("Food", 500));
+        addOnManager.addService("Single-1", new AddOnService("Spa", 1000));
 
-        bookingRequestQueue.addRequest(new Reservation("Abhi", "Single"));
-        bookingRequestQueue.addRequest(new Reservation("Subha", "Single"));
-        bookingRequestQueue.addRequest(new Reservation("Vanmathi", "Suite"));
+// Print output
+        System.out.println("\nAdd-On Service Selection");
+        System.out.println("Reservation ID: Single-1");
 
-        while (bookingRequestQueue.hasPendingRequests()) {
-            Reservation request = bookingRequestQueue.getNextRequest();
-            allocationService.allocateRoom(request, inventory);
-        }
+        double totalCost = addOnManager.calculateCost("Single-1");
+        System.out.println("Total Add-On Cost: " + totalCost);
     }
 }
