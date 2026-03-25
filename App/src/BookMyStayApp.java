@@ -1,5 +1,8 @@
 import java.security.Provider;
 import java.util.*;
+import java.io.*;
+import java.util.Map;
+
 
 abstract class Room{
     protected int numberOfBeds;
@@ -336,46 +339,77 @@ class ConcurrentBookingProcessor implements Runnable {
         }
     }
 }
-public class BookMyStayApp {
-    public static void main(String[] args) {
+class FilePersistenceService {
 
-        System.out.println("Concurrent Booking Simulation\n");
+    public void saveInventory(RoomInventory inventory, String filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
 
-        RoomInventory inventory = new RoomInventory();
-        BookingRequestQueue bookingQueue = new BookingRequestQueue();
-        RoomAllocationService allocationService = new RoomAllocationService();
+            for (Map.Entry<String, Integer> entry : inventory.getRoomAvailability().entrySet()) {
+                writer.write(entry.getKey() + "=" + entry.getValue());
+                writer.newLine();
+            }
 
-        // Add booking requests
-        bookingQueue.addRequest(new Reservation("Abhi", "Single"));
-        bookingQueue.addRequest(new Reservation("Vanmathi", "Double"));
-        bookingQueue.addRequest(new Reservation("Kural", "Suite"));
-        bookingQueue.addRequest(new Reservation("Subha", "Single"));
+            System.out.println("Inventory saved successfully.");
 
-        // Create threads
-        Thread t1 = new Thread(
-                new ConcurrentBookingProcessor(bookingQueue, inventory, allocationService)
-        );
+        } catch (IOException e) {
+            System.out.println("Error saving inventory.");
+        }
+    }
 
-        Thread t2 = new Thread(
-                new ConcurrentBookingProcessor(bookingQueue, inventory, allocationService)
-        );
+    public void loadInventory(RoomInventory inventory, String filePath) {
 
-        // Start threads
-        t1.start();
-        t2.start();
+        File file = new File(filePath);
 
-        // Wait for completion
-        try {
-            t1.join();
-            t2.join();
-        } catch (InterruptedException e) {
-            System.out.println("Thread execution interrupted.");
+        if (!file.exists()) {
+            System.out.println("No valid inventory data found. Starting fresh.");
+            return;
         }
 
-        // Print remaining inventory
-        System.out.println("\nRemaining Inventory:");
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
+            Map<String, Integer> availability = inventory.getRoomAvailability();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+
+                String[] parts = line.split("=");
+
+                if (parts.length == 2) {
+                    String roomType = parts[0];
+                    int count = Integer.parseInt(parts[1]);
+
+                    availability.put(roomType, count);
+                }
+            }
+
+            System.out.println("Inventory restored successfully.");
+
+        } catch (IOException e) {
+            System.out.println("Error loading inventory.");
+        }
+    }
+}
+public class BookMyStayApp {
+
+    public static void main(String[] args) {
+
+        System.out.println("System Recovery");
+
+        RoomInventory inventory = new RoomInventory();
+        FilePersistenceService persistenceService = new FilePersistenceService();
+
+        String filePath = "inventory.txt";
+
+        // Load inventory from file
+        persistenceService.loadInventory(inventory, filePath);
+
+        // Display current inventory
+        System.out.println("\nCurrent Inventory:");
         System.out.println("Single: " + inventory.getRoomAvailability().get("Single"));
         System.out.println("Double: " + inventory.getRoomAvailability().get("Double"));
         System.out.println("Suite: " + inventory.getRoomAvailability().get("Suite"));
+
+        // Save inventory back to file
+        persistenceService.saveInventory(inventory, filePath);
     }
 }
