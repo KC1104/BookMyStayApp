@@ -225,47 +225,66 @@ class BookingReportService {
         }
     }
 }
+
+class InvalidBookingException extends Exception {
+    public InvalidBookingException(String message) { super(message); }
+
+}
+
+class ReservationValidator {
+
+    public void validate(String guestName, String roomType, RoomInventory roomInventory)
+            throws InvalidBookingException {
+
+        if (guestName == null || guestName.trim().isEmpty()) {
+            throw new InvalidBookingException("Guest name cannot be empty");
+        }
+
+        // Normalize input (case-insensitive)
+        roomType = roomType.substring(0,1).toUpperCase() + roomType.substring(1).toLowerCase();
+
+        Map<String, Integer> availability = roomInventory.getRoomAvailability();
+
+        if (!availability.containsKey(roomType)) {
+            throw new InvalidBookingException("Invalid room type selected.");
+        }
+    }
+}
 public class BookMyStayApp {
     public static void main(String[] args) {
 
-        System.out.println("Room Allocation Processing\n");
+        public class BookMyStayApp {
+            public static void main(String[] args) {
 
-        BookingRequestQueue queue = new BookingRequestQueue();
-        RoomInventory inventory = new RoomInventory();
-        RoomAllocationService allocationService = new RoomAllocationService();
-        BookingHistory history = new BookingHistory();
-        AddOnServiceManager addOnManager = new AddOnServiceManager();
+                System.out.println("Booking Validation");
 
-        // Add booking requests
-        queue.addRequest(new Reservation("Abhi", "Single"));
-        queue.addRequest(new Reservation("Subha", "Double"));
-        queue.addRequest(new Reservation("Vanmathi", "Suite"));
+                Scanner input = new Scanner(System.in);
 
-        // Process bookings
-        while (queue.hasPendingRequests()) {
-            Reservation request = queue.getNextRequest();
+                RoomInventory roomInventory = new RoomInventory();
+                ReservationValidator reservationValidator = new ReservationValidator();
+                BookingRequestQueue bookingRequestQueue = new BookingRequestQueue();
 
-            String roomId = allocationService.allocateRoom(request, inventory);
+                try {
+                    System.out.print("Enter guest name: ");
+                    String guestName = input.nextLine();
 
-            if (roomId != null) {
-                history.addReservation(request);
+                    System.out.print("Enter room type (Single/Double/Suite): ");
+                    String roomType = input.nextLine();
 
-                // Add-ons only for first booking (example)
-                if (roomId.equals("Single-1")) {
-                    addOnManager.addService(roomId, new AddOnService("Food", 500));
-                    addOnManager.addService(roomId, new AddOnService("Spa", 1000));
+                    // Validate input
+                    reservationValidator.validate(guestName, roomType, roomInventory);
+
+                    // If valid → add to queue
+                    bookingRequestQueue.addRequest(new Reservation(guestName, roomType));
+
+                    System.out.println("Booking request added successfully!");
+
+                } catch (InvalidBookingException e) {
+                    System.out.println("Booking failed: " + e.getMessage());
+                } finally {
+                    input.close();
                 }
             }
         }
-
-        // Add-On Output
-        System.out.println("\nAdd-On Service Selection");
-        System.out.println("Reservation ID: Single-1");
-        double totalCost = addOnManager.calculateCost("Single-1");
-        System.out.println("Total Add-On Cost: " + totalCost);
-
-        // Report Output
-        BookingReportService reportService = new BookingReportService();
-        reportService.generateReport(history);
     }
 }
