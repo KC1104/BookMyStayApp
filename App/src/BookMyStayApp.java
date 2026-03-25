@@ -1,3 +1,6 @@
+import java.util.HashMap;
+import java.util.Map;
+
 abstract class Room{
     protected int numberOfBeds;
     protected int sqaureFeet;
@@ -21,6 +24,27 @@ abstract class Room{
     }
 }
 
+class RoomInventory{
+    private Map<String, Integer> roomAvailability;
+    public RoomInventory(){
+        roomAvailability = new HashMap<>();
+        initializeInventory();
+    }
+
+    private void initializeInventory(){
+        roomAvailability.put("Single", 5);
+        roomAvailability.put("Double", 3);
+        roomAvailability.put("Suite", 2);
+    }
+
+    public Map<String, Integer> getRoomAvailability(){
+        return roomAvailability;
+    }
+
+    public void updateAvailability(String roomType, int count){
+        roomAvailability.put(roomType, count);
+    }
+}
 class SingleRoom extends Room{
     public SingleRoom(int numberOfBeds, int sqaureFeet, int pricePerNight,int availableRooms){
         super(numberOfBeds, sqaureFeet, pricePerNight,availableRooms);
