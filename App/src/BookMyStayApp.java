@@ -1,5 +1,7 @@
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 
 abstract class Room{
     protected int numberOfBeds;
@@ -86,17 +88,47 @@ class RoomSearchService {
         }
     }
 }
+
+class Reservation{
+    private String guestName;
+    private String roomType;
+
+    public Reservation(String guestName, String roomType){
+        this.guestName = guestName;
+        this.roomType = roomType;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+    public String getRoomType() {  return roomType; }
+}
+
+class BookingRequestQueue{
+    private Queue<Reservation> requestQueue;
+    public BookingRequestQueue(){ requestQueue = new LinkedList<>(); }
+
+    public void addRequest(Reservation reservation){
+        requestQueue.offer(reservation);}
+
+    public Reservation getNextRequest(){return requestQueue.poll();}
+
+    public boolean hasPendingRequests(){
+        return !requestQueue.isEmpty();
+    }
+}
 public class BookMyStayApp {
     public static void main(String[] args) {
-        System.out.println("Hotel Room Initialized");
+        System.out.println("Booking Request Queue");
 
-        RoomInventory inventory = new RoomInventory();
+        BookingRequestQueue bookingRequestQueue = new BookingRequestQueue();
 
-        SingleRoom single = new SingleRoom(1, 250, 1500, 5);
-        DoubleRoom doubleRoom = new DoubleRoom(2, 400, 2500, 3);
-        SuiteRoom suite = new SuiteRoom(3, 750, 5000, 2);
+        Reservation reservation = new Reservation("Abhi", "Single");
+        Reservation reservation2 = new Reservation("Subha", "Double");
+        Reservation reservation3 = new Reservation("Vanmathi", "Suite");
 
-        RoomSearchService searchService = new RoomSearchService();
-        searchService.searchAvailableRooms(inventory, single, doubleRoom, suite);
+        bookingRequestQueue.addRequest(reservation);
+        bookingRequestQueue.addRequest(reservation2);
+        bookingRequestQueue.addRequest(reservation3);
     }
 }
